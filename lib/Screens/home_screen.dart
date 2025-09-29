@@ -60,8 +60,48 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {});
   }
 
-  void _deleteTask(Task task) {
-    task.delete();
+  Future<void> _deleteTask(Task task) async {
+    if (task.frequency != null && task.seriesId != null) {
+      // Ask the user whether to delete only this instance or the whole series
+      final result = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Delete Task"),
+          content: const Text(
+            "Do you want to delete only this task or the entire series?",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, "instance"),
+              child: const Text("This Task"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, "series"),
+              child: const Text("Entire Series"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, null),
+              child: const Text("Cancel"),
+            ),
+          ],
+        ),
+      );
+
+      if (result == "instance") {
+        await task.delete();
+      } else if (result == "series") {
+        final tasksToDelete = taskBox.values
+            .where((t) => t.seriesId == task.seriesId)
+            .toList();
+        for (var t in tasksToDelete) {
+          await t.delete();
+        }
+      }
+    } else {
+      // One-time task
+      await task.delete();
+    }
+
     setState(() {});
   }
 
@@ -115,6 +155,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     date.day == selectedDate.day &&
                     date.month == selectedDate.month &&
                     date.year == selectedDate.year;
+
+                // Get tasks for this day
+                final dayTasks = taskBox.values.where(
+                  (t) =>
+                      t.date.year == date.year &&
+                      t.date.month == date.month &&
+                      t.date.day == date.day,
+                );
+
+                final hasTasks = dayTasks.isNotEmpty;
+                final allCompleted =
+                    hasTasks && dayTasks.every((t) => t.isCompleted);
+
                 return GestureDetector(
                   onTap: () {
                     setState(() {
@@ -146,6 +199,18 @@ class _HomeScreenState extends State<HomeScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        const SizedBox(height: 4),
+
+                        // Task Completion Indicator
+                        if (hasTasks)
+                          Container(
+                            height: 4,
+                            width: 20,
+                            decoration: BoxDecoration(
+                              color: allCompleted ? Colors.green : Colors.amber,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
                       ],
                     ),
                   ),

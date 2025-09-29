@@ -5,15 +5,54 @@ class TaskTile extends StatelessWidget {
   final Task task;
   final VoidCallback onToggleComplete;
   final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final Function(bool deleteSeries)
+  onDelete; // change: pass info if series or not
 
   const TaskTile({
-    Key? key,
+    super.key,
     required this.task,
     required this.onToggleComplete,
     required this.onEdit,
     required this.onDelete,
-  }) : super(key: key);
+  });
+
+  void _confirmDelete(BuildContext context) {
+    if (task.frequency == null || task.frequency == "none") {
+      // one-time task
+      onDelete(false);
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Task"),
+        content: const Text(
+          "Do you want to delete only this task instance or the entire series?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              onDelete(false); // only this instance
+            },
+            child: const Text("This Instance"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              onDelete(true); // entire series
+            },
+            child: const Text("Entire Series"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +80,7 @@ class TaskTile extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: onDelete,
+              onPressed: () => _confirmDelete(context),
             ),
           ],
         ),

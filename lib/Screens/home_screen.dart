@@ -7,6 +7,7 @@ import '../widgets/task_card.dart';
 import '../widgets/add_task_dialog.dart';
 import '../login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'monthly_tasks_screen.dart'; // ✅ Import monthly tasks screen
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -135,6 +136,18 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text("Taskly"),
         actions: [
           IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MonthlyTasksScreen(taskBox: taskBox),
+                ),
+              );
+            },
+            icon: const Icon(Icons.calendar_month),
+            tooltip: "Monthly Tasks",
+          ),
+          IconButton(
             onPressed: _logout,
             icon: const Icon(Icons.logout),
             tooltip: "Logout",
@@ -159,7 +172,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     date.month == today.month &&
                     date.year == today.year;
 
-                // Get tasks for this day
                 final dayTasks = taskBox.values.where(
                   (t) =>
                       t.date.year == date.year &&
@@ -173,9 +185,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 Color bgColor;
                 if (isSelected) {
-                  bgColor = Colors.teal;
+                  bgColor = Colors.teal; // selected date
                 } else if (isToday) {
-                  bgColor = const Color.fromARGB(255, 173, 187, 211);
+                  bgColor = Colors.blueGrey; // current day highlight
                 } else {
                   bgColor = Colors.grey[200]!;
                 }
@@ -216,7 +228,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-
                         // Task Completion Indicator
                         if (hasTasks)
                           Container(
@@ -269,9 +280,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+
+      // ✅ Floating + Icon only adds daily task
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _openAddTaskDialog(),
-        child: const Icon(Icons.add),
+        onPressed: _openAddTaskDialog,
+        backgroundColor: Colors.teal,
+        tooltip: "Add Daily Task",
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

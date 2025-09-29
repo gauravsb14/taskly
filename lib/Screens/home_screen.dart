@@ -26,7 +26,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<DateTime> getWeekDates(DateTime baseDate) {
-    // Start from Monday
     final weekday = baseDate.weekday;
     final monday = baseDate.subtract(Duration(days: weekday - 1));
     return List.generate(7, (index) => monday.add(Duration(days: index)));
@@ -62,7 +61,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _deleteTask(Task task) async {
     if (task.frequency != null && task.seriesId != null) {
-      // Ask the user whether to delete only this instance or the whole series
       final result = await showDialog<String>(
         context: context,
         builder: (context) => AlertDialog(
@@ -98,7 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     } else {
-      // One-time task
       await task.delete();
     }
 
@@ -131,6 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final weekDates = getWeekDates(selectedDate);
     final tasks = tasksForSelectedDate();
+    final today = DateTime.now();
 
     return Scaffold(
       appBar: AppBar(
@@ -156,6 +154,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     date.month == selectedDate.month &&
                     date.year == selectedDate.year;
 
+                final isToday =
+                    date.day == today.day &&
+                    date.month == today.month &&
+                    date.year == today.year;
+
                 // Get tasks for this day
                 final dayTasks = taskBox.values.where(
                   (t) =>
@@ -168,6 +171,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 final allCompleted =
                     hasTasks && dayTasks.every((t) => t.isCompleted);
 
+                Color bgColor;
+                if (isSelected) {
+                  bgColor = Colors.teal;
+                } else if (isToday) {
+                  bgColor = const Color.fromARGB(255, 173, 187, 211);
+                } else {
+                  bgColor = Colors.grey[200]!;
+                }
+
                 return GestureDetector(
                   onTap: () {
                     setState(() {
@@ -179,15 +191,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isSelected ? Colors.teal : Colors.grey[200],
+                      color: bgColor,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
                       children: [
                         Text(
-                          DateFormat.E().format(date), // Mon, Tue...
+                          DateFormat.E().format(date),
                           style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.black87,
+                            color: (isSelected || isToday)
+                                ? Colors.white
+                                : Colors.black87,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -195,7 +209,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(
                           date.day.toString(),
                           style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.black87,
+                            color: (isSelected || isToday)
+                                ? Colors.white
+                                : Colors.black87,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
